@@ -73,6 +73,13 @@ class Board {
             super.init(board: board)
             name = "K"
         }
+
+    }
+    class Bishop : Piece {
+        override init(board: Board) { 
+            super.init(board: board)
+            name = "B"
+        }
         override func validMove(moveTo: Int) -> Bool {
            //left upper diag
            var loc = location + 7
@@ -98,6 +105,7 @@ class Board {
                 }
                 loc -= 9
            }
+           // lower right diag
            loc = location - 7
            while(board.validLocation(location: loc)){
                 if(moveTo == loc){
@@ -107,23 +115,27 @@ class Board {
            }
            return false 
         }
-
     }
-    class Bishop : Piece {
-        override init(board: Board) { 
-            super.init(board: board)
-            name = "B"
-        }
-        override func validMove(moveTo: Int) -> Bool {
-             
-        }                                                 }
-
     class Rook : Piece {
         override init(board: Board) { 
             super.init(board: board)
             name = "R"
         }
 
+        override func validMove(moveTo: Int) -> Bool {
+            if(!board.validLocation(location: moveTo)){
+                return false
+            }
+            // either vertically above or below``
+            if(moveTo % 8 == location % 8){
+                // check if something is in the way
+                
+                return true
+            }
+            if(moveTo / 8 == location / 8){
+
+            }
+        }
 
     }
 
