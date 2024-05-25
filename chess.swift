@@ -12,12 +12,29 @@ class Board {
         init(board: Board){
             self.board = board
         }
-        func validMove(moveTo: Int, boardArr: [[Square]]) -> Bool {
+        func isBlack() -> Bool {
+            if(color == Piece.BLACK){ 
+                return true
+            }
             return false
+        }
+        func isWhite() -> Bool {
+            return !isBlack()
+        }
+        // does not treat king
+        func validMove(moveTo: Int) -> Bool {
+            if(!board.validLocation(location: moveTo)){ return false }            
+            if(moveTo == location){ return false }
+            if(!board.pieceAtLocation(location: moveTo)){
+                if(board.getPieceAt(location: moveTo)!.color == self.color){
+                    return false
+                }
+            }
+            return true
         }
         // expects certain format
         // [a-hA-H][1-8]
-        func validMove(moveTo: String, boardArr: [[Square]]) -> Bool{
+        func validMove(moveTo: String) -> Bool{
             var charStart: Character = "A"
             let char: Character = Array(moveTo)[1]
             var val: Int = char.wholeNumberValue!*8
@@ -26,7 +43,7 @@ class Board {
 
             }
             val += Int(moveTo[moveTo.startIndex].asciiValue! - charStart.asciiValue!)
-            return validMove(moveTo: val, boardArr: boardArr)
+            return validMove(moveTo: val)
 
         }
 
@@ -38,6 +55,7 @@ class Board {
             super.init(board: board)
             name = "P"
         }
+        
         override func validMove(moveTo: Int) -> Bool {
             // Pawns always have a direction. once they reach the end of the board
             // they are no longer pawns
@@ -52,14 +70,18 @@ class Board {
             let leftDiag = forward-1
             let rightDiag = forward+1
         
+            var oppositeColor = Piece.WHITE
+            if(self.color == Piece.WHITE){
+                oppositeColor = Piece.BLACK
+            }
             if(moveTo == forward && board.validLocation(location: forward) && !board.pieceAtLocation(location: forward)){
                 return true
             }
             else if(moveTo == leftDiag && board.validLocation(location: leftDiag) && board.pieceAtLocation(location: leftDiag)){
-                return true
+                return board.getPieceAt(location: leftDiag)!.color == oppositeColor 
             }
             else if(moveTo == rightDiag && board.validLocation(location: rightDiag) && board.pieceAtLocation(location: rightDiag)){
-                    return true
+                    return board.getPieceAt(location: rightDiag)!.color == oppositeColor 
             }
             else{
                 return false
@@ -73,6 +95,19 @@ class Board {
             super.init(board: board)
             name = "K"
         }
+        override func validMove(moveTo: Int) -> Bool {
+            if(!super.validMove(moveTo: moveTo)){ return false }
+            let adjustments = [16 - 1, 16 + 1, 8 + 2, 8 - 2]
+            for i in 0..<adjustments.count{
+                if(location + adjustments[i] == moveTo){
+                    return true
+                }
+                else if(location - adjustments[i] == moveTo){
+                    return true
+                }
+            }
+            return false
+        }
 
     }
     class Bishop : Piece {
@@ -81,40 +116,51 @@ class Board {
             name = "B"
         }
         override func validMove(moveTo: Int) -> Bool {
-           //left upper diag
-           var loc = location + 7
-           while(board.validLocation(location: loc)){
-                if(moveTo == loc){
+            if(!super.validMove(moveTo: moveTo)){ return false }
+            var tmp = moveTo - location
+            // check which diagonal the location is on
+            // if it is not on the diag we cannot move there
+            // afterwards loop and check spaces in between
+            var stepSize = 0
+            if(tmp > 0){
+                if(tmp % 7 == 0){
+                    stepSize = -7
+                }
+                else if(tmp % 9 == 0){
+                    stepSize = -9
+                }
+                else{
+                    return false
+                }
+            }
+            else{
+                tmp *= -1
+                if(tmp % 7 == 0){
+                    stepSize = 7
+                }
+                else if(tmp % 9 == 0){
+                    stepSize = 9
+                }
+                else{
+                    return false
+                }
+            }
+            var loc = location + stepSize
+            while(board.validLocation(location: loc)){
+                if(loc == moveTo){
                     return true
                 }
-                loc += 7
-           }
-           // right upper diag
-           loc = location + 9
-           while(board.validLocation(location: loc)){
-                if(moveTo == loc){
-                    return true
+                else{
+                    if(board.pieceAtLocation(location: loc)){
+                        return false
+                    }
                 }
-                loc += 9
-           }
-           // lower left diag
-           loc = location - 9
-           while(board.validLocation(location: loc)){
-                if(moveTo == loc){
-                    return true
-                }
-                loc -= 9
-           }
-           // lower right diag
-           loc = location - 7
-           while(board.validLocation(location: loc)){
-                if(moveTo == loc){
-                    return true
-                }
-                loc -= 7
-           }
-           return false 
+                loc -= stepSize
+            } 
+        // control should not reach here
+        return false
         }
+    
     }
     class Rook : Piece {
         override init(board: Board) { 
@@ -123,18 +169,39 @@ class Board {
         }
 
         override func validMove(moveTo: Int) -> Bool {
-            if(!board.validLocation(location: moveTo)){
-                return false
-            }
+            if(!super.validMove(moveTo: moveTo)){ return false }
+            
+            var stepSize: Int
             // either vertically above or below``
             if(moveTo % 8 == location % 8){
                 // check if something is in the way
-                
-                return true
+                stepSize = 1
             }
-            if(moveTo / 8 == location / 8){
 
+
+            // horizontal
+            else if(moveTo / 8 == location / 8){
+                stepSize = 8
             }
+            else{
+                return false
+            }
+
+            if(moveTo < location){
+                stepSize *= -1
+            }   
+
+
+            var loc = location + stepSize
+            while(board.validLocation(location: loc)){
+                if(moveTo == loc){
+                    return true
+                }
+                if(board.pieceAtLocation(location: loc)){
+                    return false
+                }
+            }
+            return true
         }
 
     }
@@ -156,6 +223,28 @@ class Board {
         }
 
 
+        override func validMove(moveTo: Int) -> Bool {
+            if(!super.validMove(moveTo: moveTo)){ return false }
+            if(moveTo == location - 1){
+                return true
+            }
+            else if(moveTo == location + 1){
+                return true
+            }
+            else if(moveTo == location + 7){
+                return true
+            }
+            else if(moveTo == location + 9){
+                return true
+            }
+            else if(moveTo == location - 7){
+                return true
+            }
+            else if(moveTo == location - 9){
+                return true
+            }
+            return false
+        }
     }
     class Square {
         var location: Int = 0
@@ -196,11 +285,18 @@ class Board {
        return sq
     }
 
+
     func validLocation(location: Int) -> Bool {
         if location < 0 || location > 63 { 
             return false
         }
         return true
+    }
+    func getPieceAt(location: Int) -> Piece? {
+        if(!self.validLocation(location: location)){
+            return nil
+        }
+        return arr[location/8][location % 8].piece!
     }
     // assume valid index
     func pieceAtLocation(location: Int) -> Bool {
@@ -241,6 +337,5 @@ class Board {
     }
 
 }
-
 var b = Board()
 b.print()
