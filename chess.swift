@@ -12,6 +12,10 @@ class Board {
         init(board: Board){
             self.board = board
         }
+        init(board: Board, color: String){
+            self.board = board 
+            self.color = color
+        }
         func isBlack() -> Bool {
             if(color == Piece.BLACK){ 
                 return true
@@ -249,9 +253,83 @@ class Board {
     class Square {
         var location: Int = 0
         var piece: Piece? = nil 
+        init(loc: Int){
+            location = loc
+        }
+        init(){
+
+        }
     }
     
     var arr = [[Square]]() 
+
+    init(){
+        let str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+        fenReader(input: str)
+    }
+    init(input: String){
+        fenReader(input: input)
+    }
+
+// rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+    func fenReader(input: String){
+        var state = input.split(separator: " ")
+        
+        var rows = state[0].split(separator: "/")
+        for i in 0...7{
+            arr.append([])
+            var col: Int = 0
+            for j in 0...rows[i].count-1{
+                let char = rows[i][rows[i].index(rows[i].startIndex, offsetBy: j)]
+                var emptySpaces = Int(String(char))
+
+                if(emptySpaces != nil){
+                        for k in 1...emptySpaces!{
+                            arr[i].append(Board.Square(loc: i*8 + col))
+                            col += 1
+                        }
+                        continue
+                }
+                let upperChar = char.uppercased()
+                var color = "W"
+                if(char.isLowercase){
+                        color = "B"
+                }
+                var sq = Board.Square(loc: i*8 + col)
+                col += 1
+                switch(upperChar){
+                    case "P":
+                        sq.piece = Pawn(board: b)
+                    case "N":
+                        sq.piece = Knight(board: b)
+                    case "B":
+                        sq.piece = Bishop(board: b)
+                    case "Q":
+                        sq.piece = Queen(board: b)
+                    case "K":
+                        sq.piece = King(board: b)
+                    case "R":
+                        sq.piece = Rook(board: b)
+                    default:
+                        Swift.print("ERROR")
+                }
+                sq.piece!.color = color
+                arr[i].append(sq)
+
+
+
+                    
+
+                    
+            }
+        }
+    }
+
+
+
+
+
+
     // might want to put this in the initializaiton of square
     func generateSquareForLocation(location: Int) -> Square{
        var sq: Square = Square()
@@ -302,6 +380,7 @@ class Board {
     func pieceAtLocation(location: Int) -> Bool {
         return arr[location/8][location%8].piece != nil
     }
+    
     // for debugging purposes
     func print(){
         var str = ""
@@ -311,13 +390,19 @@ class Board {
         }
         inBetweenLine += "-"
         str += inBetweenLine + "\n"
-        for i in 0...arr.count-1{
+        for i in (0...arr.count-1).reversed(){
             for j in 0...arr[i].count-1{
                 if arr[i][j].piece == nil{
                     str += "|   "
                 }
                 else{
-                    str += "| " + arr[i][j].piece!.name + " "
+                    let piece = arr[i][j].piece!
+                    if(piece.color == Piece.BLACK){
+                        str += "| " + arr[i][j].piece!.name + " "
+                    }
+                    else{
+                        str += "| " + "\u{001B}[0;31m" + piece.name + " " + "\u{001B}[0;30m"
+                    }
                 }
             }
             str += "|\n"
@@ -325,17 +410,13 @@ class Board {
         }
         Swift.print(str)
     }
-    init(){
-        for i in 0...7{
-            arr.append([])
-            for j: Int in 0...7{
-                arr[i].append(generateSquareForLocation(location: i*8 + j))
-            }
 
-        }
-
-    }
 
 }
+
+
+
+
+let str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 var b = Board()
 b.print()
