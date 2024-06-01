@@ -55,6 +55,7 @@ class Board {
     }
 
     class Pawn : Piece {
+        var hasMoved = false
         override init(board: Board) { 
             super.init(board: board)
             name = "P"
@@ -271,6 +272,44 @@ class Board {
         fenReader(input: input)
     }
 
+    // assume correct format
+    func move(from: String, to: String) -> Bool {
+        let char: Character = "a"
+        var firstChar = from[from.index(from.startIndex, offsetBy: 0)]
+        var secondChar = from[from.index(from.startIndex, offsetBy: 1)]
+        
+        let start = Int(String(secondChar))!*8 + Int(firstChar.asciiValue! - char.asciiValue!) 
+
+        firstChar = to[to.index(to.startIndex, offsetBy: 0)]
+        secondChar = to[to.index(to.startIndex, offsetBy: 1)]
+
+        let end = Int(String(secondChar))!*8 + Int(firstChar.asciiValue! - char.asciiValue!)      
+        return self.move(from: start, to: end)
+
+    }
+
+    func move(from: Int, to: Int) -> Bool {
+        if(!(self.validLocation(location: from) && self.validLocation(location: to))){
+            return false
+        }      
+
+        if(!self.pieceAtLocation(location: from)){
+            return false
+        }
+
+        if(!arr[from/8][from%8].piece!.validMove(moveTo: to)){
+            return false
+        }
+        // MARY should i announce a piece taken?
+        if(self.pieceAtLocation(location: to)){
+
+        }
+        arr[to/8][to%8].piece = arr[from/8][from%8].piece
+        arr[from/8][from%8].piece = nil
+        return true 
+
+    }
+
 // rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
     func fenReader(input: String){
         var state = input.split(separator: " ")
@@ -284,16 +323,16 @@ class Board {
                 var emptySpaces = Int(String(char))
 
                 if(emptySpaces != nil){
-                        for k in 1...emptySpaces!{
-                            arr[i].append(Board.Square(loc: i*8 + col))
-                            col += 1
-                        }
-                        continue
+                    for k in 1...emptySpaces!{
+                        arr[i].append(Board.Square(loc: i*8 + col))
+                        col += 1
+                    }
+                    continue
                 }
                 let upperChar = char.uppercased()
                 var color = "W"
                 if(char.isLowercase){
-                        color = "B"
+                    color = "B"
                 }
                 var sq = Board.Square(loc: i*8 + col)
                 col += 1
